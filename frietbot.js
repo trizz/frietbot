@@ -25,6 +25,18 @@ var priceListUrl = 'http://www.cafetariadehuut.nl/images/prijslijst%202015.pdf';
 var orderPhoneNumber = '0314-344828';
 
 var orderData = [];
+var lastDay;
+
+function checkDate() {
+    var d = new Date();
+    var n = d.getDate();
+
+    if (lastDay != n) {
+        orderData = [];
+    }
+
+    lastDay = n;
+}
 
 /**
  * Get the current order. If perUser is true, a list of users with their order is send. Otherwise a list with totals
@@ -96,6 +108,9 @@ function getCurrentOrder(perUser, data) {
 slack.on('message', function (data) {
     // If no text, return.
     if (typeof data.text == 'undefined') return;
+
+    // At every request, check the day to see if the bot data needs a reset.
+    checkDate();
 
     var command = data.text.split(' ');
 
