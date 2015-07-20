@@ -35,11 +35,16 @@ var orderData = [];
  */
 function getCurrentOrder(perUser, data) {
     var totals = [];
+    var userHasOrdered = [];
     var currentOrder = "De volgende bestelling is bij mij bekend: :fries: ```\n";
+    var orderFound = false;
+    var allUsersHaveOrdered = true;
 
     for (var userId in orderData) {
         if (typeof orderData[userId] !== 'function') {
             currentOrder += slack.getUser(userId).name + ':  ' + orderData[userId] + "\n";
+            orderFound = true;
+            userHasOrdered.push(userId);
             if (orderData[userId] in totals) {
                 totals[orderData[userId]] += 1;
             } else {
@@ -56,14 +61,34 @@ function getCurrentOrder(perUser, data) {
         }
     }
 
-    console.log(slack.slackData.users);
+    var userList = "*Let op:*\n De onderstaande gebruikers hebben nog niets besteld:\n";
+    slack.slackData.users.forEach(function (item) {
+        var name = item.profile.real_name;
+        var id = item.id;
+
+        if (id != slack.slackData.self.id && name != 'slackbot') {
+            if (userHasOrdered.indexOf(id) == -1) {
+                userList += "  * "+name + "\n";
+                allUsersHaveOrdered = false;
+            }
+        }
+    });
 
     totalsMessage += "```\n" + snackbarName + " is te bereiken via: `" + orderPhoneNumber + "`";
 
-    if (perUser == true) {
-        slack.sendMsg(data.channel, currentOrder);
+    if (orderFound == true) {
+        if (perUser == true) {
+            slack.sendMsg(data.channel, currentOrder);
+        } else {
+            slack.sendMsg(data.channel, totalsMessage);
+        }
+
+        if (!allUsersHaveOrdered) {
+            slack.sendMsg(data.channel, userList);
+        }
+
     } else {
-        slack.sendMsg(data.channel, totalsMessage);
+        slack.sendMsg(data.channel, 'Nog niemand heeft een bestelling geplaatst! :cry: Ben jij de eerste vandaag '+slack.getUser(data.user).profile.first_name+'?');
     }
 }
 
