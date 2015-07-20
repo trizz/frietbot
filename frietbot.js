@@ -32,10 +32,14 @@ function checkDate() {
     var n = d.getDate();
 
     if (lastDay != n) {
-        orderData = [];
+        resetBot();
     }
 
     lastDay = n;
+}
+
+function resetBot() {
+    orderData = [];
 }
 
 /**
@@ -129,6 +133,14 @@ slack.on('message', function (data) {
                 getCurrentOrder(true, data);
             } else if (command.indexOf('wat hebben ze') > -1) {
                 slack.sendMsg(data.channel, '@' + slack.getUser(data.user).name + ': je kunt het complete aanbod van ' + snackbarName + ' vinden op ' + priceListUrl);
+            } else if (command == 'reset') {
+                if (slack.getUser(data.user).is_admin == true) {
+                    resetBot();
+                    //slack.sendPM(slack.getUser(data.user), 'De frietbot is weer gereset!');
+                    slack.sendMsg(data.channel, 'http://makeameme.org/media/created/aaaand-its-gone-smt2lw.jpg');
+                } else {
+                    slack.sendMsg(data.channel, ':troll:');
+                }
             } else {
                 if (data.user in orderData) {
                     slack.sendMsg(data.channel, '@' + slack.getUser(data.user).name + ': ik had al een bestelling van je! Deze heb ik nu overschreven met een `' + command + '`.');
