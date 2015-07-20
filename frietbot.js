@@ -1,10 +1,23 @@
 // Requiring our module
 var slackAPI = require('slackbotapi');
 
+var config = {};
+
+config.log = false;
+config.slackKey = null;
+
+if(process.argv.indexOf("-l") != -1){
+    config.log = true;
+}
+
+if(process.argv.indexOf("-k") != -1){
+    config.slackKey = process.argv[process.argv.indexOf("-k") + 1];;
+}
+
 // Starting
 var slack = new slackAPI({
-    'token': "<SLACK KEY>",
-    'logging': true
+    'token': config.slackKey,
+    'logging': config.log
 });
 
 var snackbarName = 'Cafetaria de Huut';
