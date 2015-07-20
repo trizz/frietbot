@@ -55,6 +55,9 @@ function getCurrentOrder(perUser, data) {
             totalsMessage += totals[orderItem] + "x " + orderItem + "\n";
         }
     }
+
+    console.log(slack.slackData.users);
+
     totalsMessage += "```\n" + snackbarName + " is te bereiken via: `" + orderPhoneNumber + "`";
 
     if (perUser == true) {
