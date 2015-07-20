@@ -1,6 +1,6 @@
 ## Frietbot
 
-To run the Friebot, you need to install the slackbotapi:
+To run the Frietbot, you need to install the `slackbotapi`:
 
 ```npm install slackbotapi```
 

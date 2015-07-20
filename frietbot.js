@@ -28,6 +28,9 @@ var orderData = [];
 var lastDay;
 var date = new Date();
 
+/**
+ * Check the date. If today isn't the day saved in 'lastDay', reset the bot data.
+ */
 function checkDate() {
     if (date.getDate() != lastDay) {
         resetBot();
@@ -36,6 +39,9 @@ function checkDate() {
     lastDay = date.getDate();
 }
 
+/**
+ * Reset the bot data.
+ */
 function resetBot() {
     orderData = [];
 }
@@ -51,9 +57,16 @@ function getCurrentOrder(perUser, data) {
     var totals = [];
     var userHasOrdered = [];
     var currentOrder = "De volgende bestelling is bij mij bekend: :fries: ```\n";
+    var totalsMessage = '@' + slack.getUser(data.user).name + ': ik heb voor vandaag de volgende bestelling genoteerd: :fries: ```' + "\n";
+    var usersWithoutOrders = "*Let op:*\n De onderstaande gebruikers hebben nog niets besteld:\n";
+
     var orderFound = false;
     var allUsersHaveOrdered = true;
 
+    /*
+     * Loop through all the users, check if there are orders and count the totals. Also, add the users and what they've
+     * order to the 'currentOrder' var so we can give it back if required.
+     */
     for (var userId in orderData) {
         if (typeof orderData[userId] !== 'function') {
             currentOrder += slack.getUser(userId).name + ':  ' + orderData[userId] + "\n";
@@ -68,28 +81,33 @@ function getCurrentOrder(perUser, data) {
     }
     currentOrder += '```';
 
-    var totalsMessage = '@' + slack.getUser(data.user).name + ': ik heb voor vandaag de volgende bestelling genoteerd: :fries: ```' + "\n";
+    // Loop through all of the order items to add them to the 'totalsMessage' so we can give it back when required.
     for (var orderItem in totals) {
         if (typeof totals[orderItem] !== 'function') {
             totalsMessage += totals[orderItem] + "x " + orderItem + "\n";
         }
     }
 
-    var userList = "*Let op:*\n De onderstaande gebruikers hebben nog niets besteld:\n";
+    /*
+     * Loop through all of the Slack users to see if they've ordered something. If they haven't, add the name to the
+     * 'usersWithoutOrders' list
+     */
     slack.slackData.users.forEach(function (item) {
         var name = item.profile.real_name;
         var id = item.id;
 
         if (id != slack.slackData.self.id && name != 'slackbot') {
             if (userHasOrdered.indexOf(id) == -1) {
-                userList += "  * "+name + "\n";
+                usersWithoutOrders += "  * "+name + "\n";
                 allUsersHaveOrdered = false;
             }
         }
     });
 
+    // Add the snack bar name and phone number to the totals message.
     totalsMessage += "```\n" + snackbarName + " is te bereiken via: `" + orderPhoneNumber + "`";
 
+    // If there are some orders found, check if we want to give it back listed per-user or a total (for easy ordering)
     if (orderFound == true) {
         if (perUser == true) {
             slack.sendMsg(data.channel, currentOrder);
@@ -97,10 +115,12 @@ function getCurrentOrder(perUser, data) {
             slack.sendMsg(data.channel, totalsMessage);
         }
 
+        // Show a warning when not all users have placed an order.
         if (!allUsersHaveOrdered) {
-            slack.sendMsg(data.channel, userList);
+            slack.sendMsg(data.channel, usersWithoutOrders);
         }
 
+    // If nobody has placed an order yet, be sad and cry.
     } else {
         slack.sendMsg(data.channel, 'Nog niemand heeft een bestelling geplaatst! :cry: Ben jij de eerste vandaag '+slack.getUser(data.user).profile.first_name+'?');
     }
@@ -127,29 +147,37 @@ slack.on('message', function (data) {
 
             if (command == 'bestellen') {
                 getCurrentOrder(false, data);
+
             } else if (command.indexOf('wie heeft wat') > -1) {
                 getCurrentOrder(true, data);
+
             } else if (command.indexOf('wat hebben ze') > -1) {
                 slack.sendMsg(data.channel, '@' + slack.getUser(data.user).name + ': je kunt het complete aanbod van ' + snackbarName + ' vinden op ' + priceListUrl);
+
             } else if (command == 'reset') {
+                // Only a team admin can reset the bot. All other users receive a troll.
                 if (slack.getUser(data.user).is_admin == true) {
                     resetBot();
-                    //slack.sendPM(slack.getUser(data.user), 'De frietbot is weer gereset!');
                     slack.sendMsg(data.channel, 'http://makeameme.org/media/created/aaaand-its-gone-smt2lw.jpg');
                 } else {
                     slack.sendMsg(data.channel, ':troll:');
                 }
+
+            // If no command is specified, assume it is an order.
             } else {
+                // Return another message if this user has already ordered something, before overwrite it.
                 if (data.user in orderData) {
                     slack.sendMsg(data.channel, '@' + slack.getUser(data.user).name + ': ik had al een bestelling van je! Deze heb ik nu overschreven met een `' + command + '`.');
                 } else {
                     slack.sendMsg(data.channel, '@' + slack.getUser(data.user).name + ': een `' + command + '` is voor je genoteerd.');
 
+                    // Warn the user (just one time) if today isn't a friday.
                     if (date.getDay() != 5) {
                         slack.sendMsg(data.channel, '@' + slack.getUser(data.user).name + ': je weet wel dat het geen vrijdag is? :see_no_evil:');
                     }
                 }
 
+                // (Over)write the order for this user.
                 orderData[data.user] = command;
             }
         }
