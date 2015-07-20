@@ -3,7 +3,7 @@ var slackAPI = require('slackbotapi');
 
 // Starting
 var slack = new slackAPI({
-    'token': "xoxb-7928985360-iQphc7pNeUthUZOSHPYTfNmN",
+    'token': "<SLACK KEY>",
     'logging': true
 });
 
