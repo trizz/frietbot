@@ -11,7 +11,7 @@ if(process.argv.indexOf("-l") != -1){
 }
 
 if(process.argv.indexOf("-k") != -1){
-    config.slackKey = process.argv[process.argv.indexOf("-k") + 1];;
+    config.slackKey = process.argv[process.argv.indexOf("-k") + 1];
 }
 
 // Starting
@@ -26,16 +26,14 @@ var orderPhoneNumber = '0314-344828';
 
 var orderData = [];
 var lastDay;
+var date = new Date();
 
 function checkDate() {
-    var d = new Date();
-    var n = d.getDate();
-
-    if (lastDay != n) {
+    if (date.getDate() != lastDay) {
         resetBot();
     }
 
-    lastDay = n;
+    lastDay = date.getDate();
 }
 
 function resetBot() {
@@ -146,6 +144,10 @@ slack.on('message', function (data) {
                     slack.sendMsg(data.channel, '@' + slack.getUser(data.user).name + ': ik had al een bestelling van je! Deze heb ik nu overschreven met een `' + command + '`.');
                 } else {
                     slack.sendMsg(data.channel, '@' + slack.getUser(data.user).name + ': een `' + command + '` is voor je genoteerd.');
+
+                    if (date.getDay() != 5) {
+                        slack.sendMsg(data.channel, '@' + slack.getUser(data.user).name + ': je weet wel dat het geen vrijdag is? :see_no_evil:');
+                    }
                 }
 
                 orderData[data.user] = command;
