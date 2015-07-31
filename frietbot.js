@@ -32,6 +32,8 @@ var date = new Date();
  * Check the date. If today isn't the day saved in 'lastDay', reset the bot data.
  */
 function checkDate() {
+    // Update the date
+    date = new Date();
     if (date.getDate() != lastDay) {
         resetBot();
     }
