@@ -112,20 +112,36 @@ function getCurrentOrder(perUser, data) {
     // If there are some orders found, check if we want to give it back listed per-user or a total (for easy ordering)
     if (orderFound == true) {
         if (perUser == true) {
-            slack.sendMsg(data.channel, currentOrder);
+            sendMessage(data, currentOrder);
         } else {
-            slack.sendMsg(data.channel, totalsMessage);
+            sendMessage(data, totalsMessage);
         }
 
         // Show a warning when not all users have placed an order.
         if (!allUsersHaveOrdered) {
-            slack.sendMsg(data.channel, usersWithoutOrders);
+            sendMessage(data, usersWithoutOrders);
         }
 
     // If nobody has placed an order yet, be sad and cry.
     } else {
-        slack.sendMsg(data.channel, 'Nog niemand heeft een bestelling geplaatst! :cry: Ben jij de eerste vandaag '+slack.getUser(data.user).profile.first_name+'?');
+        sendMessage(data, 'Nog niemand heeft een bestelling geplaatst! :cry: Ben jij de eerste vandaag ' + slack.getUser(data.user).profile.first_name + '?');
     }
+}
+
+function sendUsageInfo(data)
+{
+    reply(data, 'Ik snap de volgende shit:\nbestellen\nwie heeft wat?\nwat hebben ze?\n-je bestelling-\nreset' );
+}
+
+function reply(data, reply)
+{
+    var message = '@' + slack.getUser(data.user).name + ': ' + reply;
+    sendMessage(data, message);
+}
+
+function sendMessage(data, message)
+{
+    slack.sendMsg(data.channel, message);
 }
 
 // Slack on EVENT message, send data.
@@ -141,7 +157,7 @@ slack.on('message', function (data) {
     // Only if we are mentioned
     if (command[0] == '<@' + slack.slackData.self.id + '>' || command[0] == '<@' + slack.slackData.self.id + '>:') {
         if (command.length == 1) {
-            slack.sendMsg(data.channel, 'Zeg het eens @' + slack.getUser(data.user).name + '. Wat kan ik vandaag voor je noteren?');
+            sendMessage(data, 'Zeg het eens @' + slack.getUser(data.user).name + '. Wat kan ik vandaag voor je noteren?');
         } else {
             // Remove the first item (@<botname>) and make it one command again.
             command.shift();
@@ -154,28 +170,31 @@ slack.on('message', function (data) {
                 getCurrentOrder(true, data);
 
             } else if (command.indexOf('wat hebben ze') > -1) {
-                slack.sendMsg(data.channel, '@' + slack.getUser(data.user).name + ': je kunt het complete aanbod van ' + snackbarName + ' vinden op ' + priceListUrl);
+                reply(data, 'je kunt het complete aanbod van ' + snackbarName + ' vinden op ' + priceListUrl);
 
             } else if (command == 'reset') {
                 // Only a team admin can reset the bot. All other users receive a troll.
                 if (slack.getUser(data.user).is_admin == true) {
                     resetBot();
-                    slack.sendMsg(data.channel, 'http://makeameme.org/media/created/aaaand-its-gone-smt2lw.jpg');
+                    sendMessage(data, 'http://makeameme.org/media/created/aaaand-its-gone-smt2lw.jpg');
                 } else {
-                    slack.sendMsg(data.channel, ':troll:');
+                    reply(data, ':troll:');
                 }
+
+            } else if (command.indexOf('help') > -1 || command.indexOf('usage') > -1) {
+                sendUsageInfo(data);
 
             // If no command is specified, assume it is an order.
             } else {
                 // Return another message if this user has already ordered something, before overwrite it.
                 if (data.user in orderData) {
-                    slack.sendMsg(data.channel, '@' + slack.getUser(data.user).name + ': ik had al een bestelling van je! Deze heb ik nu overschreven met een `' + command + '`.');
+                    reply(data, 'ik had al een bestelling van je! Deze heb ik nu overschreven met een `' + command + '`.');
                 } else {
-                    slack.sendMsg(data.channel, '@' + slack.getUser(data.user).name + ': een `' + command + '` is voor je genoteerd.');
+                    reply(data, 'een `' + command + '` is voor je genoteerd.');
 
                     // Warn the user (just one time) if today isn't a friday.
                     if (date.getDay() != 5) {
-                        slack.sendMsg(data.channel, '@' + slack.getUser(data.user).name + ': je weet wel dat het geen vrijdag is? :see_no_evil:');
+                        reply(data, 'je weet wel dat het geen vrijdag is? :see_no_evil:');
                     }
                 }
 
