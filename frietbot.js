@@ -98,7 +98,7 @@ function getCurrentOrder(perUser, data) {
         var name = item.profile.real_name;
         var id = item.id;
 
-        if (id != slack.slackData.self.id && name != 'slackbot') {
+        if (id != slack.slackData.self.id && name != null && name != 'slackbot') {
             if (userHasOrdered.indexOf(id) == -1) {
                 usersWithoutOrders += "  * "+name + "\n";
                 allUsersHaveOrdered = false;
