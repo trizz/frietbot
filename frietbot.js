@@ -21,7 +21,7 @@ var slack = new slackAPI({
 });
 
 var snackbarName = 'Cafetaria de Huut';
-var priceListUrl = 'http://www.cafetariadehuut.nl/images/prijslijst%202015.pdf';
+var priceListUrl = 'http://www.cafetariadehuut.nl/images/prijslijst%202016.pdf';
 var orderPhoneNumber = '0314-344828';
 
 var orderData = [];
